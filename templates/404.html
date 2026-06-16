@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 — Page Not Found | EventHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #11121a;
+            --bg-elevated: #181a24;
+            --text: #F3F1ED;
+            --text-muted: #9a97aa;
+            --gold: #f2b134;
+            --coral: #ef6361;
+            --line-strong: rgba(255, 255, 255, 0.16);
+            --font-display: 'Fraunces', serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg);
+            color: var(--text-muted);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .stub {
+            background: var(--bg-elevated);
+            border: 1px solid var(--line-strong);
+            border-radius: 18px;
+            padding: 60px 50px;
+            max-width: 460px;
+            position: relative;
+        }
+
+        .stub::before, .stub::after {
+            content: '';
+            position: absolute;
+            width: 22px; height: 22px;
+            background: var(--bg);
+            border: 1px solid var(--line-strong);
+            border-radius: 50%;
+            left: -11px;
+        }
+
+        .stub::before { top: 50%; transform: translateY(-50%); }
+        .stub::after { right: -11px; top: 50%; transform: translateY(-50%); left: auto; }
+
+        .code {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            letter-spacing: 0.3em;
+            color: var(--gold);
+            margin-bottom: 18px;
+            font-weight: 700;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 2.6rem;
+            color: var(--text);
+            margin-bottom: 14px;
+            font-weight: 600;
+        }
+
+        h1 em { font-style: italic; color: var(--coral); }
+
+        p { font-size: 1rem; margin-bottom: 30px; line-height: 1.7; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 30px;
+            border-radius: 999px;
+            background: var(--gold);
+            color: #18181c;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.92rem;
+            transition: all 0.25s ease;
+        }
+
+        .btn:hover { background: #f7c25c; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <div class="stub">
+        <span class="code">ERROR 404 · TICKET NOT FOUND</span>
+        <h1>This <em>page</em> doesn't exist</h1>
+        <p>The page you're looking for may have been moved, renamed, or never existed in the first place.</p>
+        <a href="/" class="btn"><i class="fas fa-ticket"></i> Back to home</a>
+    </div>
+</body>
+</html>
