@@ -25,8 +25,11 @@ from database import (
     get_all_users, get_admin_stats, delete_user
 )
 
+from chatbot import chatbot_bp  # ← ADD THIS LINE HERE
+
 app = Flask(__name__)
 app.secret_key = "eventhub_secret_key"  # change this to a random value in production
+app.register_blueprint(chatbot_bp)# ← ADD THIS LINE HERE
 
 
 # ============= HELPER FUNCTIONS ============= #

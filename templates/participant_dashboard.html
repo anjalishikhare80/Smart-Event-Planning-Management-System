@@ -585,5 +585,16 @@ window.addEventListener('scroll', () => {
 });
 </script>
 
+
+
+
+<script>
+  document.body.dataset.role = "{{ session.get('role', 'Guest') }}";
+  document.body.dataset.username = "{{ session.get('user_name', '') }}";
+</script>
+<script src="/static/chatbot/chatbot.js"></script>
+
+
+
 </body>
 </html>
