@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, send_file
 from werkzeug.security import check_password_hash
 import re
+import os
 from io import BytesIO
 from datetime import datetime
 
@@ -25,11 +26,12 @@ from database import (
     get_all_users, get_admin_stats, delete_user
 )
 
-from chatbot import chatbot_bp  # ← ADD THIS LINE HERE
+# ── Chatbot module (isolated — no existing code touched) ────────────────── #
+from chatbot import chatbot_bp
 
 app = Flask(__name__)
 app.secret_key = "eventhub_secret_key"  # change this to a random value in production
-app.register_blueprint(chatbot_bp)# ← ADD THIS LINE HERE
+app.register_blueprint(chatbot_bp)
 
 
 # ============= HELPER FUNCTIONS ============= #
@@ -902,6 +904,6 @@ def internal_error(e):
 # ============= RUN APP ============= #
 
 if __name__ == '__main__':
-    init_db()  # auto-creates event_db.db and the users table on first run
+    init_db()  # creates tables and seeds admin accounts on first run
     print("🚀 EVENTHUB SERVER STARTING...")
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

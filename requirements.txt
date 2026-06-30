@@ -1,0 +1,15 @@
+flask
+werkzeug
+psycopg2-binary
+reportlab
+openpyxl
+gunicorn
+
+
+
+
+Host: localhost
+Port: 5432
+Database: eventhub
+Username: postgres
+Password: root123

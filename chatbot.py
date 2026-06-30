@@ -148,7 +148,7 @@ KNOWLEDGE = {
         "responses": {
             "Guest":       "You need to be logged in as an Organizer to create events. Sign up at the homepage (/) and select the Organizer role.",
             "Admin":       "Only Organizers can create events. As Admin, you review and approve events submitted by Organizers in the Pending Approval section.",
-            "Organizer":   "To create an event:\n1. Go to /organizer_dashboard\n2. Scroll to 'Create a new event' section\n3. Fill in all required fields:\n   - Event Title\n   - Category (Workshop/Conference/Party/Wedding/Competition/Concert)\n   - Venue\n   - Event Date (cannot be in the past)\n   - Event Time\n   - Maximum Participants\n   - Registration Closing Date (must be before event date)\n   - Contact Number\n   - Description\n4. Click 'Submit for approval'\n\nYour event will be sent to Admin for review and will show as 'Pending Approval'.",
+            "Organizer":   "To create an event:\n1. Go to /organizer_dashboard\n2. Scroll to 'Create a new event' section\n3. Fill in all required fields:\n   - Event Title\n   - Category (Technical Events/Creative Events/Cultural Events/Academic Events/Competition/Sports & Fitness)\n   - Venue\n   - Event Date (cannot be in the past)\n   - Event Time\n   - Maximum Participants\n   - Registration Closing Date (must be before event date)\n   - Contact Number\n   - Description\n4. Click 'Submit for approval'\n\nYour event will be sent to Admin for review and will show as 'Pending Approval'.",
             "Participant": "Only Organizers can create events. If you want to create events, you would need an Organizer account. You can sign up as an Organizer from the homepage."
         },
         "suggestions": ["What happens after I create an event?", "What is pending approval?", "What are the event categories?"]
@@ -280,13 +280,13 @@ KNOWLEDGE = {
     "event_code": {
         "patterns": [
             "event code", "what is event code", "event code kya hai",
-            "event id", "event identifier", "wks cmp cnf"
+            "event id", "event identifier", "TEC cmp cnf"
         ],
         "responses": {
-            "Guest":       "Event codes are unique identifiers automatically assigned to each event (e.g. WKS-0001, CNF-0002).",
-            "Admin":       "Event codes are auto-generated when an event is created:\n• WKS — Workshop\n• CNF — Conference\n• PTY — Party\n• WED — Wedding\n• CMP — Competition\n• CCT — Concert\n\nFormat: PREFIX-NNNN (e.g. WKS-0007). Visible in All Events table.",
-            "Organizer":   "Each event gets an auto-generated Event Code when created:\n• WKS-0001 (Workshop)\n• CNF-0001 (Conference)\n• PTY-0001 (Party)\n• WED-0001 (Wedding)\n• CMP-0001 (Competition)\n• CCT-0001 (Concert)\n\nVisible on your event cards and in participant reports.",
-            "Participant": "Each event has a unique Event Code (e.g. WKS-0007) shown on your:\n• My Registrations cards\n• Upcoming Events cards\n• Registration Receipt PDF"
+            "Guest":       "Event codes are unique identifiers automatically assigned to each event (e.g. TEC-0001, CRE-0002).",
+            "Admin":       "Event codes are auto-generated when an event is created:\n• TEC — Technical Events\n• CRE — Creative Events\n• CUL — Cultural Events\n• ACD — Academic Events\n• CMP — Competition\n• SPT — Sports & Fitness\n\nFormat: PREFIX-NNNN (e.g. TEC-0007). Visible in All Events table.",
+            "Organizer":   "Each event gets an auto-generated Event Code when created:\n• TEC-0001 (Technical Events)\n• CRE-0001 (Creative Events)\n• CUL-0001 (Cultural Events)\n• ACD-0001 (Academic Events)\n• CMP-0001 (Competition)\n• SPT-0001 (Sports & Fitness)\n\nVisible on your event cards and in participant reports.",
+            "Participant": "Each event has a unique Event Code (e.g. TEC-0007) shown on your:\n• My Registrations cards\n• Upcoming Events cards\n• Registration Receipt PDF"
         },
         "suggestions": ["What is a registration ID?", "How do I download my receipt?"]
     },
@@ -304,7 +304,7 @@ KNOWLEDGE = {
             "Guest":       "To discover events, sign up as a Participant on the homepage (/). Once logged in, you can browse all approved events.",
             "Admin":       "Participants discover events through the Discover Events section of their dashboard — only Approved events with available seats are shown.",
             "Organizer":   "Participants discover your events in the Discover Events section once Admin approves them. Make sure your event details are clear and attractive.",
-            "Participant": "To discover events:\n1. Go to /participant_dashboard → 'Discover Events' section\n2. Browse all approved events with open registration\n3. Use the search bar to find by name, venue, or organizer\n4. Filter by category: Workshops, Conferences, Parties, Weddings, Competitions, Concerts\n\nEach card shows: Event name, date, venue, available seats, and registration deadline.\n\nOnly events that are Approved + Open + Have seats available are shown here."
+            "Participant": "To discover events:\n1. Go to /participant_dashboard → 'Discover Events' section\n2. Browse all approved events with open registration\n3. Use the search bar to find by name, venue, or organizer\n4. Filter by category: Technical Events, Creative Events, Cultural Events, Academic Events, Competitions, Sports & Fitness\n\nEach card shows: Event name, date, venue, available seats, and registration deadline.\n\nOnly events that are Approved + Open + Have seats available are shown here."
         },
         "suggestions": ["How do I register for an event?", "What are the event categories?", "How do I cancel a registration?"]
     },
@@ -350,7 +350,7 @@ KNOWLEDGE = {
             "Guest":       "Sign up and login as a Participant to view your registrations.",
             "Admin":       "Individual Participants view their registrations in the 'My Registrations' section of their dashboard.",
             "Organizer":   "Only Participants have a 'My Registrations' section. As Organizer, you view registrations per event in the 'Participants' panel.",
-            "Participant": "To view your registrations:\n1. Go to /participant_dashboard\n2. Click 'My Registrations' tab\n\nEach registration card shows:\n• Event name, venue, date, time\n• Event Code (e.g. WKS-0007)\n• Registration ID (e.g. REG-00001)\n• Registration deadline\n• Status (Registered / Reg. Closed / Completed)\n• Receipt download button\n• Cancel button (if deadline not passed)"
+            "Participant": "To view your registrations:\n1. Go to /participant_dashboard\n2. Click 'My Registrations' tab\n\nEach registration card shows:\n• Event name, venue, date, time\n• Event Code (e.g. TEC-0007)\n• Registration ID (e.g. REG-00001)\n• Registration deadline\n• Status (Registered / Reg. Closed / Completed)\n• Receipt download button\n• Cancel button (if deadline not passed)"
         },
         "suggestions": ["How do I download my receipt?", "How do I cancel a registration?", "Where are my upcoming events?"]
     },
@@ -465,13 +465,13 @@ KNOWLEDGE = {
         "patterns": [
             "event categories", "types of events", "what events are available",
             "event types", "categories", "what kind of events",
-            "workshop", "conference", "party", "wedding", "competition", "concert"
+            "Technical Events", "Creative Events", "Cultural Events", "Academic Events", "competition", "Sports & Fitness"
         ],
         "responses": {
-            "Guest":       "EventHub supports 6 event categories:\n1. Workshops — Interactive learning sessions\n2. Conferences — Professional networking events\n3. Parties — Social celebrations\n4. Weddings — Special ceremonies\n5. Competitions — Contests and hackathons\n6. Concerts — Live performances",
-            "Admin":       "EventHub supports 6 categories: Workshops, Conferences, Parties, Weddings, Competitions, Concerts. Event codes are prefixed accordingly (WKS, CNF, PTY, WED, CMP, CCT).",
-            "Organizer":   "When creating an event, choose from 6 categories:\n1. Workshop (Code: WKS-XXXX)\n2. Conference (Code: CNF-XXXX)\n3. Party (Code: PTY-XXXX)\n4. Wedding (Code: WED-XXXX)\n5. Competition (Code: CMP-XXXX)\n6. Concert (Code: CCT-XXXX)",
-            "Participant": "You can filter Discover Events by 6 categories:\n1. Workshops\n2. Conferences\n3. Parties\n4. Weddings\n5. Competitions\n6. Concerts\n\nUse the filter buttons in the Discover Events section."
+            "Guest":       "EventHub supports 6 event categories:\n1. Technical Events — Interactive learning sessions\n2. Creative Events — Professional networking events\n3. Cultural Events — Social celebrations\n4. Academic Events — Special ceremonies\n5. Competitions — Contests and hackathons\n6. Sports & Fitness — Live performances",
+            "Admin":       "EventHub supports 6 categories: Technical Events, Creative Events, Cultural Events, Academic Events, Competitions, Sports & Fitness. Event codes are prefixed accordingly (TEC, CRE, CUL, ACD, CMP, SPT).",
+            "Organizer":   "When creating an event, choose from 6 categories:\n1. Technical Events (Code: TEC-XXXX)\n2. Creative Events (Code: CRE-XXXX)\n3. Cultural Events (Code: CUL-XXXX)\n4. Academic Events (Code: ACD-XXXX)\n5. Competition (Code: CMP-XXXX)\n6. Sports & Fitness (Code: SPT-XXXX)",
+            "Participant": "You can filter Discover Events by 6 categories:\n1. Technical Events\n2. Creative Events\n3. ParCultural Eventsties\n4. Academic Events\n5. Competitions\n6. Sports & Fitness\n\nUse the filter buttons in the Discover Events section."
         },
         "suggestions": ["How do I discover events?", "How do I create an event?"]
     },
