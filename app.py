@@ -1715,8 +1715,10 @@ def bad_request(e):
 
 # ============= RUN ============= #
 
+print("🗄️  Initialising database...")
+init_db()
+print("🚀 EVENTHUB READY")
+
 if __name__ == '__main__':
-    init_db()
-    print("🚀 EVENTHUB SERVER STARTING...")
     app.run(debug=False, host='0.0.0.0',
             port=int(os.environ.get('PORT', 5000)))
