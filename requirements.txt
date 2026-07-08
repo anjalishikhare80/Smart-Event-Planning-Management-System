@@ -1,0 +1,10 @@
+flask
+werkzeug
+psycopg2-binary
+reportlab
+openpyxl
+gunicorn
+python-dotenv
+qrcode[pil]
+Flask-WTF
+Flask-Limiter

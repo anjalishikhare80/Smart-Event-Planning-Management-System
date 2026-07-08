@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participant Dashboard | EventHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --bg:#11121a;--bg-elevated:#181a24;--bg-soft:#1f222e;
+            --text:#F3F1ED;--text-muted:#9a97aa;
+            --gold:#f2b134;--gold-soft:rgba(242,177,52,0.12);
+            --coral:#ef6361;--coral-soft:rgba(239,99,97,0.12);
+            --teal:#57c2b6;--teal-soft:rgba(87,194,182,0.12);
+            --purple:#a78bfa;--purple-soft:rgba(167,139,250,0.12);
+            --line:rgba(255,255,255,0.08);--line-strong:rgba(255,255,255,0.16);
+            --shadow:rgba(0,0,0,0.45);
+            --sidebar-w:260px;--sidebar-w-col:72px;--topbar-h:64px;
+            --font-display:'Fraunces',serif;--font-body:'Inter',sans-serif;--font-mono:'Space Mono',monospace;
+            --radius:12px;--radius-lg:18px;
+        }
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:var(--font-body);background:var(--bg);color:var(--text-muted);min-height:100vh;display:flex;}
+        a{color:inherit;text-decoration:none;}
+
+        /* SIDEBAR */
+        .sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--bg-elevated);border-right:1px solid var(--line);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;transition:width .3s ease;overflow:hidden;}
+        .sidebar.collapsed{width:var(--sidebar-w-col);}
+        .sidebar-logo{display:flex;align-items:center;gap:12px;padding:0 20px;height:var(--topbar-h);border-bottom:1px solid var(--line);flex-shrink:0;}
+        .logo-mark{width:38px;height:38px;border-radius:10px;background:var(--gold);display:flex;align-items:center;justify-content:center;color:#18181c;font-size:1rem;flex-shrink:0;}
+        .logo-text{font-family:var(--font-display);font-weight:600;font-size:1.2rem;color:var(--text);white-space:nowrap;transition:opacity .2s;}
+        .sidebar.collapsed .logo-text{opacity:0;pointer-events:none;}
+        .sidebar-nav{flex:1;padding:16px 10px;overflow-y:auto;overflow-x:hidden;}
+        .nav-label{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted);padding:8px 12px 6px;white-space:nowrap;opacity:.7;transition:opacity .2s;}
+        .sidebar.collapsed .nav-label{opacity:0;}
+        .nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--radius);cursor:pointer;transition:all .2s;position:relative;white-space:nowrap;border:none;background:none;width:100%;text-align:left;color:var(--text-muted);font-family:var(--font-body);font-size:.9rem;font-weight:500;}
+        .nav-item i{font-size:1rem;width:20px;text-align:center;flex-shrink:0;}
+        .nav-item .label{transition:opacity .2s;white-space:nowrap;}
+        .sidebar.collapsed .nav-item .label{opacity:0;pointer-events:none;}
+        .nav-item:hover{background:var(--bg-soft);color:var(--text);}
+        .nav-item.active{background:var(--teal-soft);color:var(--teal);border:1px solid rgba(87,194,182,.2);}
+        .nav-item.active i{color:var(--teal);}
+        .sidebar.collapsed .nav-item::after{content:attr(data-tip);position:absolute;left:calc(var(--sidebar-w-col) + 8px);background:var(--bg-soft);border:1px solid var(--line-strong);color:var(--text);padding:6px 12px;border-radius:8px;font-size:.8rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:300;}
+        .sidebar.collapsed .nav-item:hover::after{opacity:1;}
+        .sidebar-footer{border-top:1px solid var(--line);padding:12px 10px;flex-shrink:0;}
+        .logout-btn{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--radius);cursor:pointer;border:none;background:none;width:100%;color:var(--text-muted);font-family:var(--font-body);font-size:.9rem;font-weight:500;transition:all .2s;white-space:nowrap;}
+        .logout-btn i{font-size:1rem;width:20px;text-align:center;flex-shrink:0;}
+        .logout-btn span{transition:opacity .2s;}
+        .sidebar.collapsed .logout-btn span{opacity:0;}
+        .logout-btn:hover{background:var(--coral-soft);color:var(--coral);}
+
+        /* MAIN */
+        .main-wrap{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-height:100vh;transition:margin-left .3s ease;}
+        .main-wrap.collapsed{margin-left:var(--sidebar-w-col);}
+
+        /* TOPBAR */
+        .topbar{height:var(--topbar-h);background:var(--bg-elevated);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100;gap:20px;}
+        .topbar-left{display:flex;align-items:center;gap:16px;}
+        .toggle-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--line-strong);background:transparent;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all .2s;}
+        .toggle-btn:hover{border-color:var(--teal);color:var(--teal);}
+        .breadcrumb{font-family:var(--font-mono);font-size:.75rem;letter-spacing:.1em;color:var(--text-muted);display:flex;align-items:center;gap:8px;}
+        .breadcrumb span{color:var(--text);}
+        .topbar-right{display:flex;align-items:center;gap:12px;}
+
+        /* NOTIFICATION BELL */
+        .notif-btn{position:relative;width:38px;height:38px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem;transition:all .2s;}
+        .notif-btn:hover{border-color:var(--gold);color:var(--gold);}
+        .notif-badge{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:999px;background:var(--coral);color:#fff;font-family:var(--font-mono);font-size:.6rem;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg-elevated);}
+        .notif-badge.show{display:flex;}
+        .notif-dropdown{position:absolute;top:calc(100% + 10px);right:0;width:320px;background:var(--bg-elevated);border:1px solid var(--line-strong);border-radius:var(--radius-lg);box-shadow:0 20px 50px var(--shadow);z-index:300;display:none;overflow:hidden;}
+        .notif-dropdown.open{display:block;animation:fadeDown .2s ease;}
+
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:20px;}
+        .modal-overlay.open{display:flex;animation:fadeIn .2s ease;}
+        .modal-box{background:var(--bg-elevated);border:1px solid var(--line-strong);border-radius:var(--radius-lg);width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 60px var(--shadow);}
+        .modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line);flex-shrink:0;}
+        .modal-header h2{font-family:var(--font-display);font-size:1.15rem;font-weight:600;color:var(--text);}
+        .modal-header h2 em{font-style:italic;color:var(--gold);}
+        .modal-close{width:34px;height:34px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+        .modal-close:hover{border-color:var(--coral);color:var(--coral);transform:rotate(90deg);}
+        .modal-body{flex:1;overflow-y:auto;padding:20px 24px;}
+        .modal-footer{padding:14px 24px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+        .star-rating{display:flex;gap:6px;font-size:1.6rem;margin:10px 0 16px;}
+        .star-rating i{color:var(--line-strong);cursor:pointer;transition:color .15s;}
+        .star-rating i.active{color:var(--gold);}
+        .feedback-textarea{width:100%;min-height:90px;border-radius:10px;border:1px solid var(--line-strong);background:var(--bg-soft);color:var(--text);padding:10px 12px;font-family:var(--font-body);font-size:.85rem;resize:vertical;}
+        .cert-lock-note{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--text-muted);background:var(--bg-soft);border:1px dashed var(--line-strong);border-radius:10px;padding:8px 10px;margin-top:6px;}
+        .cert-lock-note i{color:var(--gold);}
+        @keyframes fadeDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+        .notif-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);}
+        .notif-header span{font-weight:700;color:var(--text);font-size:.9rem;}
+        .notif-mark-all{font-family:var(--font-mono);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);cursor:pointer;background:none;border:none;padding:4px 8px;border-radius:6px;transition:all .2s;}
+        .notif-mark-all:hover{background:var(--gold-soft);}
+        .notif-list{max-height:280px;overflow-y:auto;}
+        .notif-item{display:flex;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .2s;}
+        .notif-item:hover{background:var(--bg-soft);}
+        .notif-item.unread{background:rgba(87,194,182,.04);}
+        .notif-item:last-child{border-bottom:none;}
+        .notif-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;flex-shrink:0;}
+        .notif-icon.success{background:var(--teal-soft);color:var(--teal);}
+        .notif-icon.info{background:var(--gold-soft);color:var(--gold);}
+        .notif-icon.error{background:var(--coral-soft);color:var(--coral);}
+        .notif-icon.warning{background:var(--purple-soft);color:var(--purple);}
+        .notif-content{flex:1;min-width:0;}
+        .notif-title{font-size:.82rem;font-weight:600;color:var(--text);}
+        .notif-msg{font-size:.75rem;color:var(--text-muted);margin-top:2px;line-height:1.4;}
+        .notif-time{font-family:var(--font-mono);font-size:.6rem;color:var(--text-muted);margin-top:3px;opacity:.7;}
+        .notif-unread-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px;}
+        .notif-empty{padding:28px;text-align:center;color:var(--text-muted);font-size:.88rem;}
+
+        /* PROFILE */
+        .profile-btn{display:flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:999px;border:1px solid var(--line-strong);background:var(--bg-soft);cursor:pointer;transition:all .2s;}
+        .profile-btn:hover{border-color:var(--teal);}
+        .profile-avatar{width:30px;height:30px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:.75rem;font-weight:700;color:#0d1117;flex-shrink:0;}
+        .profile-name{font-size:.85rem;font-weight:600;color:var(--text);white-space:nowrap;}
+        .role-pill{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);border:1px solid var(--teal);border-radius:999px;padding:3px 10px;font-weight:700;}
+        .dropdown{position:relative;}
+        .dropdown-menu{position:absolute;top:calc(100% + 8px);right:0;background:var(--bg-elevated);border:1px solid var(--line-strong);border-radius:var(--radius);min-width:180px;box-shadow:0 16px 40px var(--shadow);display:none;z-index:200;overflow:hidden;}
+        .dropdown-menu.open{display:block;animation:fadeDown .2s ease;}
+        .dropdown-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:.88rem;color:var(--text-muted);cursor:pointer;transition:all .2s;border:none;background:none;width:100%;text-align:left;}
+        .dropdown-item:hover{background:var(--bg-soft);color:var(--text);}
+        .dropdown-item.danger:hover{background:var(--coral-soft);color:var(--coral);}
+
+        /* PAGE */
+        .page-content{flex:1;padding:28px;overflow-y:auto;}
+        .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:28px;flex-wrap:wrap;}
+        .page-header-left h1{font-family:var(--font-display);font-size:1.9rem;font-weight:600;color:var(--text);letter-spacing:-.5px;line-height:1.2;}
+        .page-header-left h1 em{font-style:italic;color:var(--teal);}
+        .page-header-left p{font-size:.9rem;margin-top:4px;}
+        .section{display:none;}
+        .section.active{display:block;animation:fadeUp .3s ease;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+        /* STATS */
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px;}
+        .stat-card{background:var(--bg-elevated);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;position:relative;overflow:hidden;transition:transform .25s,border-color .25s;}
+        .stat-card:hover{transform:translateY(-3px);border-color:var(--line-strong);}
+        .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+        .stat-card.teal::before{background:var(--teal);}
+        .stat-card.gold::before{background:var(--gold);}
+        .stat-card.coral::before{background:var(--coral);}
+        .stat-card.purple::before{background:var(--purple);}
+        .stat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem;margin-bottom:10px;}
+        .stat-icon.teal{background:var(--teal-soft);color:var(--teal);}
+        .stat-icon.gold{background:var(--gold-soft);color:var(--gold);}
+        .stat-icon.coral{background:var(--coral-soft);color:var(--coral);}
+        .stat-icon.purple{background:var(--purple-soft);color:var(--purple);}
+        .stat-num{font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--text);display:block;line-height:1;}
+        .stat-label{font-family:var(--font-mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin-top:5px;display:block;}
+
+        /* DISCOVER TOOLBAR */
+        .discover-toolbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:20px;}
+        .search-wrap{position:relative;flex:1;min-width:220px;}
+        .search-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:.9rem;}
+        .search-wrap input{width:100%;padding:11px 16px 11px 42px;border:1px solid var(--line-strong);border-radius:999px;background:var(--bg-elevated);color:var(--text);font-family:var(--font-body);font-size:.9rem;outline:none;transition:all .25s;}
+        .search-wrap input:focus{border-color:var(--teal);}
+        .search-wrap input::placeholder{color:var(--text-muted);opacity:.6;}
+        .filter-pills{display:flex;gap:8px;flex-wrap:wrap;}
+        .filter-select{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.04em;padding:9px 14px;border-radius:999px;border:1px solid var(--line-strong);background:var(--bg-elevated);color:var(--text);cursor:pointer;outline:none;}
+        .filter-select:hover{border-color:var(--teal);}
+        .filter-pill{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px;border-radius:999px;border:1px solid var(--line-strong);background:var(--bg-elevated);color:var(--text-muted);cursor:pointer;transition:all .2s;font-weight:700;}
+        .filter-pill:hover{border-color:var(--teal);color:var(--teal);}
+        .filter-pill.active{background:var(--teal);color:#0d1117;border-color:var(--teal);}
+
+        /* EVENT CARDS */
+        .events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px;}
+        .event-card{background:var(--bg-elevated);border:1px solid var(--line-strong);border-radius:var(--radius-lg);padding:22px;display:flex;flex-direction:column;gap:10px;transition:transform .25s,border-color .25s;}
+        .event-card:hover{transform:translateY(-3px);border-color:var(--teal);}
+        .event-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+        .cat-tag{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700;border:1px solid var(--gold);border-radius:999px;padding:3px 10px;}
+        .event-code-tag{font-family:var(--font-mono);font-size:.66rem;color:var(--text-muted);letter-spacing:.08em;}
+        .event-card h3{font-family:var(--font-display);font-size:1.05rem;font-weight:600;color:var(--text);line-height:1.3;}
+        .event-meta{display:flex;flex-direction:column;gap:5px;}
+        .meta-row{display:flex;align-items:center;gap:8px;font-size:.82rem;}
+        .meta-row i{color:var(--gold);width:14px;text-align:center;flex-shrink:0;}
+        .meta-row.seats i{color:var(--teal);}
+        .meta-row.deadline i{color:var(--coral);}
+        .seats-track{height:3px;background:var(--bg-soft);border-radius:3px;overflow:hidden;margin-top:4px;}
+        .seats-fill{height:100%;border-radius:3px;background:var(--teal);transition:width .4s ease;}
+        .card-action{margin-top:6px;}
+        .reg-id-badge{font-family:var(--font-mono);font-size:.7rem;color:var(--teal);background:var(--teal-soft);border:1px solid var(--teal);border-radius:999px;padding:4px 12px;display:inline-block;font-weight:700;}
+
+        /* PILLS */
+        .pill{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:999px;font-weight:700;display:inline-block;white-space:nowrap;}
+        .pill-registered{background:var(--teal-soft);color:var(--teal);border:1px solid var(--teal);}
+        .pill-closed{background:var(--bg-soft);color:var(--text-muted);border:1px solid var(--line-strong);}
+        .pill-completed{background:var(--teal-soft);color:var(--teal);border:1px solid var(--teal);opacity:.7;}
+        .pill-full{background:var(--coral-soft);color:var(--coral);border:1px solid var(--coral);}
+
+        /* BUTTONS */
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:999px;font-size:.83rem;font-weight:600;font-family:var(--font-body);cursor:pointer;transition:all .25s;border:1px solid transparent;text-decoration:none;width:100%;}
+        .btn-teal{background:var(--teal);color:#0d1117;}
+        .btn-teal:hover{background:#6fd4c9;transform:translateY(-1px);}
+        .btn-outline-coral{background:transparent;color:var(--coral);border-color:var(--coral);}
+        .btn-outline-coral:hover{background:var(--coral);color:#fff;}
+        .btn-outline{background:transparent;color:var(--text-muted);border-color:var(--line-strong);}
+        .btn-outline:hover{border-color:var(--teal);color:var(--teal);}
+        .btn-sm{padding:8px 16px;font-size:.76rem;}
+        .btn-icon-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 14px;border-radius:999px;border:1px solid var(--line-strong);background:transparent;color:var(--text-muted);font-family:var(--font-body);font-size:.76rem;font-weight:600;text-decoration:none;transition:all .25s;width:100%;}
+        .btn-icon-link:hover{border-color:var(--gold);color:var(--gold);}
+        .btn-icon-link i{color:var(--gold);}
+
+        /* DAYS BADGE */
+        .days-badge{font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:var(--gold-soft);border:1px solid var(--gold);border-radius:999px;padding:4px 10px;white-space:nowrap;font-weight:700;}
+
+        /* TWO-COL ACTION */
+        .two-col-action{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
+        .two-col-action form{display:flex;}
+        .one-col-action{margin-top:6px;}
+
+        /* UPCOMING PREVIEW */
+        .upcoming-preview{background:var(--bg-elevated);border:1px solid var(--line);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:22px;}
+        .upcoming-preview-title{font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;}
+        .upcoming-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 0;flex-wrap:wrap;}
+        .upcoming-row:not(:last-child){border-bottom:1px solid var(--line);}
+        .upcoming-info{min-width:0;}
+        .upcoming-title{font-weight:600;color:var(--text);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .upcoming-meta{font-size:.78rem;color:var(--text-muted);margin-top:3px;}
+
+        /* EMPTY */
+        .empty-state{text-align:center;padding:50px 20px;color:var(--text-muted);grid-column:1/-1;}
+        .empty-state i{font-size:2.5rem;opacity:.3;display:block;margin-bottom:14px;}
+
+        /* MOBILE */
+        .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:150;backdrop-filter:blur(2px);}
+        @media(max-width:768px){
+            .sidebar{transform:translateX(-100%);width:var(--sidebar-w) !important;}
+            .sidebar.mobile-open{transform:translateX(0);}
+            .mobile-overlay.active{display:block;}
+            .main-wrap,.main-wrap.collapsed{margin-left:0 !important;}
+            .page-content{padding:18px;}
+            .profile-name{display:none;}
+            .discover-toolbar{flex-direction:column;align-items:stretch;}
+        }
+    </style>
+</head>
+<body>
+<div class="mobile-overlay" id="mobileOverlay" onclick="closeMobile()"></div>
+
+<!-- FEEDBACK MODAL (rating unlocks the certificate) -->
+<div class="modal-overlay" id="feedbackModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Rate <em id="feedbackEventTitle">Event</em></h2>
+            <button class="modal-close" onclick="closeFeedbackModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="feedbackForm" method="POST" action="/participant/feedback/0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-body">
+                <p style="color:var(--text-muted);font-size:.82rem;margin-bottom:4px;">Your feedback unlocks the certificate for this event.</p>
+                <div class="star-rating" id="starRating">
+                    <i class="fas fa-star" data-value="1" onclick="setRating(1)"></i>
+                    <i class="fas fa-star" data-value="2" onclick="setRating(2)"></i>
+                    <i class="fas fa-star" data-value="3" onclick="setRating(3)"></i>
+                    <i class="fas fa-star" data-value="4" onclick="setRating(4)"></i>
+                    <i class="fas fa-star" data-value="5" onclick="setRating(5)"></i>
+                </div>
+                <input type="hidden" name="rating" id="ratingInput" value="0">
+                <textarea name="comments" class="feedback-textarea" placeholder="Tell us about your experience (optional)"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeFeedbackModal()">Cancel</button>
+                <button type="submit" class="btn btn-sm" style="margin-left:auto;background:var(--gold);color:#11121a;border:none;font-weight:700;" id="feedbackSubmitBtn" disabled><i class="fas fa-award"></i> Submit &amp; Unlock Certificate</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- QR CHECK-IN MODAL -->
+<div class="modal-overlay" id="qrModal">
+    <div class="modal-box" style="max-width:360px;">
+        <div class="modal-header">
+            <h2>Check-in <em id="qrEventTitle">QR</em></h2>
+            <button class="modal-close" onclick="closeQrModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="text-align:center;">
+            <p style="color:var(--text-muted);font-size:.82rem;margin-bottom:14px;">Show this to the organizer at entry — they'll scan it with their phone camera to check you in.</p>
+            <img id="qrImage" src="" alt="Check-in QR code" style="width:100%;max-width:260px;border-radius:12px;background:#fff;padding:12px;">
+        </div>
+    </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-mark"><i class="fas fa-ticket"></i></div>
+        <span class="logo-text">EventHub</span>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-label">Overview</div>
+        <button class="nav-item active" data-section="dashboard" data-tip="Dashboard" onclick="showSection('dashboard',this)">
+            <i class="fas fa-gauge-high"></i><span class="label">Dashboard</span>
+        </button>
+        <div class="nav-label">Events</div>
+        <button class="nav-item" data-section="discover" data-tip="Discover" onclick="showSection('discover',this)">
+            <i class="fas fa-compass"></i><span class="label">Discover Events</span>
+        </button>
+        <button class="nav-item" data-section="registrations" data-tip="My Registrations" onclick="showSection('registrations',this)">
+            <i class="fas fa-ticket-alt"></i><span class="label">My Registrations</span>
+        </button>
+        <button class="nav-item" data-section="upcoming" data-tip="Upcoming" onclick="showSection('upcoming',this)">
+            <i class="fas fa-calendar-check"></i><span class="label">Upcoming Events</span>
+        </button>
+        <button class="nav-item" data-section="completed" data-tip="Completed" onclick="showSection('completed',this)">
+            <i class="fas fa-flag-checkered"></i><span class="label">Completed Events</span>
+        </button>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()">
+            <i class="fas fa-arrow-right-from-bracket"></i><span>Logout</span>
+        </button>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main-wrap" id="mainWrap">
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            <div class="breadcrumb">
+                <i class="fas fa-ticket"></i> EventHub
+                <i class="fas fa-chevron-right" style="font-size:.6rem;"></i>
+                <span id="breadcrumbLabel">Dashboard</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <!-- NOTIFICATION BELL -->
+            <div class="dropdown" style="position:relative;">
+                <button class="notif-btn" id="notifBtn" onclick="toggleNotif()">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge {% if unread_count > 0 %}show{% endif %}" id="notifBadge">
+                        {{ unread_count if unread_count > 0 else '' }}
+                    </span>
+                </button>
+                <div class="notif-dropdown" id="notifDropdown">
+                    <div class="notif-header">
+                        <span>Notifications</span>
+                        <button class="notif-mark-all" onclick="markAllRead()">Mark all read</button>
+                    </div>
+                    <div class="notif-list" id="notifList"><div class="notif-empty">Loading...</div></div>
+                </div>
+            </div>
+            <!-- PROFILE -->
+            <div class="dropdown">
+                <div class="profile-btn" onclick="toggleDropdown()">
+                    <div class="profile-avatar">{{ user_name[0].upper() if user_name else 'P' }}</div>
+                    <span class="profile-name">{{ user_name }}</span>
+                    <span class="role-pill">Participant</span>
+                </div>
+                <div class="dropdown-menu" id="profileDropdown">
+                    <div style="padding:12px 16px;border-bottom:1px solid var(--line);">
+                        <div style="font-size:.85rem;font-weight:600;color:var(--text);">{{ user_name }}</div>
+                        <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px;">{{ email }}</div>
+                    </div>
+                    <button class="dropdown-item danger" onclick="logout()"><i class="fas fa-arrow-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-content">
+
+        <!-- DASHBOARD -->
+        <div class="section active" id="section-dashboard">
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1>Hey <em>{{ user_name }}</em>, what's next?</h1>
+                    <p>Your event activity at a glance.</p>
+                </div>
+                <button class="btn btn-teal btn-sm" style="width:auto;" onclick="showSection('discover',document.querySelector('[data-section=discover]'))">
+                    <i class="fas fa-compass"></i> Discover Events
+                </button>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card teal"><div class="stat-icon teal"><i class="fas fa-ticket-alt"></i></div><span class="stat-num">{{ my_registrations|length }}</span><span class="stat-label">Registered</span></div>
+                <div class="stat-card gold"><div class="stat-icon gold"><i class="fas fa-calendar-check"></i></div><span class="stat-num">{{ my_registrations|selectattr('status','in',['Approved','Registration Closed'])|list|length }}</span><span class="stat-label">Upcoming</span></div>
+                <div class="stat-card purple"><div class="stat-icon purple"><i class="fas fa-flag-checkered"></i></div><span class="stat-num">{{ my_registrations|selectattr('status','equalto','Completed')|list|length }}</span><span class="stat-label">Completed</span></div>
+                <div class="stat-card teal"><div class="stat-icon teal"><i class="fas fa-compass"></i></div><span class="stat-num">{{ events|length }}</span><span class="stat-label">Open to Join</span></div>
+            </div>
+
+            {% set upcoming_events = my_registrations|selectattr('status','in',['Approved','Registration Closed'])|list %}
+            {% if upcoming_events %}
+            <div class="upcoming-preview">
+                <div class="upcoming-preview-title">Your upcoming events</div>
+                {% for event in upcoming_events[:3] %}
+                <div class="upcoming-row">
+                    <div class="upcoming-info">
+                        <div class="upcoming-title">{{ event['title'] }}</div>
+                        <div class="upcoming-meta">
+                            <i class="fas fa-calendar" style="color:var(--gold);margin-right:5px;"></i>{{ event['event_date'] }}{% if event['event_time'] %} · {{ event['event_time'] }}{% endif %}
+                            &nbsp;·&nbsp;
+                            <i class="fas fa-location-dot" style="color:var(--gold);margin-right:4px;"></i>{{ event['venue'] }}
+                        </div>
+                    </div>
+                    <span class="days-badge" data-event-date="{{ event['event_date'] }}">Upcoming</span>
+                </div>
+                {% endfor %}
+                {% if upcoming_events|length > 3 %}
+                <div style="text-align:center;margin-top:12px;">
+                    <button class="btn btn-outline btn-sm" style="width:auto;" onclick="showSection('upcoming',document.querySelector('[data-section=upcoming]'))">View all {{ upcoming_events|length }} upcoming</button>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- DISCOVER EVENTS -->
+        <div class="section" id="section-discover">
+            <div class="page-header"><div class="page-header-left"><h1>Discover <em>Events</em></h1><p>Approved events with open registration and available seats.</p></div></div>
+            <div class="discover-toolbar">
+                <div class="search-wrap">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input type="text" id="discoverSearch" placeholder="Search by name, venue, or organizer...">
+                </div>
+                <select id="discoverSort" class="filter-select">
+                    <option value="date_asc">Soonest first</option>
+                    <option value="date_desc">Latest first</option>
+                    <option value="seats_desc">Most seats left</option>
+                    <option value="seats_asc">Filling up fast</option>
+                </select>
+            </div>
+            <div class="discover-toolbar" style="margin-top:10px;">
+                <div class="filter-pills" id="dateFilters">
+                    <button class="filter-pill active" data-range="all">All Dates</button>
+                    <button class="filter-pill" data-range="today">Today</button>
+                    <button class="filter-pill" data-range="week">This Week</button>
+                    <button class="filter-pill" data-range="month">This Month</button>
+                </div>
+                <div class="filter-pills" id="categoryFilters">
+                    <button class="filter-pill active" data-cat="all">All</button>
+                    <button class="filter-pill" data-cat="Technical Events">Technical</button>
+                    <button class="filter-pill" data-cat="Creative Events">Creative</button>
+                    <button class="filter-pill" data-cat="Cultural Events">Cultural</button>
+                    <button class="filter-pill" data-cat="Academic Events">Academic</button>
+                    <button class="filter-pill" data-cat="Competition">Competition</button>
+                    <button class="filter-pill" data-cat="Sports & Fitness">Sports</button>
+                </div>
+            </div>
+            <div class="events-grid" id="discoverGrid">
+                {% for event in events %}
+                {% set seats_left = event['capacity'] - event['registered_count'] %}
+                {% set seats_pct = ((event['registered_count'] / event['capacity']) * 100)|int if event['capacity'] > 0 else 0 %}
+                <div class="event-card discover-card"
+                     data-category="{{ event['category'] }}"
+                     data-date="{{ event['event_date'] }}"
+                     data-seats-left="{{ seats_left }}"
+                     data-search="{{ (event['title']~' '~event['venue']~' '~event['organizer_name'])|lower }}">
+                    <div class="event-card-top">
+                        <span class="cat-tag">{{ event['category'] }}</span>
+                        {% if event['id'] in registered_ids %}
+                            <span class="pill pill-registered">Registered</span>
+                        {% elif seats_left <= 0 %}
+                            <span class="pill pill-full">Full</span>
+                        {% endif %}
+                    </div>
+                    <h3>{{ event['title'] }}</h3>
+                    {% if event['description'] %}<p style="font-size:.82rem;color:var(--text-muted);">{{ event['description'][:80] }}{% if event['description']|length > 80 %}...{% endif %}</p>{% endif %}
+                    <div class="event-meta">
+                        <div class="meta-row"><i class="fas fa-user"></i> {{ event['organizer_name'] }}</div>
+                        <div class="meta-row"><i class="fas fa-calendar"></i> {{ event['event_date'] }}{% if event['event_time'] %} · {{ event['event_time'] }}{% endif %}</div>
+                        <div class="meta-row"><i class="fas fa-location-dot"></i> {{ event['venue'] }}</div>
+                        <div class="meta-row seats"><i class="fas fa-chair"></i> {{ seats_left }} seat{{ 's' if seats_left!=1 else '' }} left of {{ event['capacity'] }}</div>
+                        {% if event['registration_close_date'] %}<div class="meta-row deadline"><i class="fas fa-hourglass-half"></i> Register by {{ event['registration_close_date'] }}</div>{% endif %}
+                    </div>
+                    <div class="seats-track"><div class="seats-fill" style="width:{{ seats_pct }}%;{% if seats_pct >= 90 %}background:var(--coral);{% elif seats_pct >= 70 %}background:var(--gold);{% endif %}"></div></div>
+                    <div class="card-action">
+                        {% if event['id'] in registered_ids %}
+                            <span class="pill pill-registered" style="display:flex;justify-content:center;padding:10px;">✓ Already Registered</span>
+                        {% elif seats_left <= 0 %}
+                            <span class="pill pill-full" style="display:flex;justify-content:center;padding:10px;">Event Full</span>
+                        {% else %}
+                            <form method="POST" action="/participant/register_event/{{ event['id'] }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-teal"><i class="fas fa-ticket"></i> Register Now</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state"><i class="fas fa-calendar-xmark"></i><p>No events available right now. Check back soon.</p></div>
+                {% endfor %}
+            </div>
+            <div class="empty-state" id="noSearchResults" style="display:none;"><i class="fas fa-magnifying-glass"></i><p>No events match your search or filter.</p></div>
+        </div>
+
+        <!-- MY REGISTRATIONS -->
+        <div class="section" id="section-registrations">
+            <div class="page-header"><div class="page-header-left"><h1>My <em>Registrations</em></h1><p>All events you have registered for.</p></div></div>
+            <div class="events-grid">
+                {% for event in my_registrations %}
+                <div class="event-card">
+                    <div class="event-card-top">
+                        <span class="cat-tag">{{ event['category'] }}</span>
+                        {% if event['status']=='Completed' %}<span class="pill pill-completed">Completed</span>
+                        {% elif event['status']=='Registration Closed' %}<span class="pill pill-closed">Reg. Closed</span>
+                        {% else %}<span class="pill pill-registered">Registered</span>{% endif %}
+                    </div>
+                    <h3>{{ event['title'] }}</h3>
+                    <span class="reg-id-badge">REG-{{ '%05d'|format(event['registration_id']) }}</span>
+                    <div class="event-meta">
+                        <div class="meta-row"><i class="fas fa-user"></i> {{ event['organizer_name'] }}</div>
+                        <div class="meta-row"><i class="fas fa-calendar"></i> {{ event['event_date'] }}{% if event['event_time'] %} · {{ event['event_time'] }}{% endif %}</div>
+                        <div class="meta-row"><i class="fas fa-location-dot"></i> {{ event['venue'] }}</div>
+                        {% if event['event_code'] %}<div class="meta-row"><i class="fas fa-barcode"></i> {{ event['event_code'] }}</div>{% endif %}
+                        {% if event['registration_close_date'] %}<div class="meta-row deadline"><i class="fas fa-hourglass-half"></i> Cancel by {{ event['registration_close_date'] }}</div>{% endif %}
+                    </div>
+                    {% if event['status'] != 'Completed' %}
+                    <div class="two-col-action">
+                        <a href="/participant/receipt/{{ event['registration_id'] }}" class="btn-icon-link"><i class="fas fa-file-pdf"></i> Receipt</a>
+                        <form method="POST" action="/participant/cancel_event/{{ event['id'] }}"
+                              class="cancel-form"
+                              data-reg-close="{{ event['registration_close_date'] or '' }}"
+                              onsubmit="return confirm('Cancel this registration?');"
+                              style="width:100%;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-coral btn-sm" style="width:100%;"><i class="fas fa-xmark"></i> Cancel</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    {% if not event['attended'] %}
+                    <div class="two-col-action">
+                        <a href="/participant/receipt/{{ event['registration_id'] }}" class="btn-icon-link" style="grid-column:1 / -1;"><i class="fas fa-file-pdf"></i> Receipt</a>
+                    </div>
+                    <div class="cert-lock-note"><i class="fas fa-lock"></i> Attendance not marked yet — certificate unlocks once the organizer confirms you attended.</div>
+                    {% elif not event['feedback_submitted'] %}
+                    <div class="two-col-action">
+                        <a href="/participant/receipt/{{ event['registration_id'] }}" class="btn-icon-link"><i class="fas fa-file-pdf"></i> Receipt</a>
+                        <button type="button" class="btn-icon-link" data-reg-id="{{ event['registration_id'] }}" data-event-title="{{ event['title'] }}" onclick="openFeedback(this.dataset.regId, this.dataset.eventTitle, 0, '')"><i class="fas fa-star"></i> Rate &amp; Unlock</button>
+                    </div>
+                    {% else %}
+                    <div class="two-col-action">
+                        <a href="/participant/receipt/{{ event['registration_id'] }}" class="btn-icon-link"><i class="fas fa-file-pdf"></i> Receipt</a>
+                        <a href="/participant/certificate/{{ event['registration_id'] }}" class="btn-icon-link"><i class="fas fa-award"></i> Certificate</a>
+                    </div>
+                    <button type="button" data-reg-id="{{ event['registration_id'] }}" data-event-title="{{ event['title'] }}" data-rating="{{ event['feedback_rating'] }}" data-comments="{{ event['feedback_comments'] or '' }}" onclick="openFeedback(this.dataset.regId, this.dataset.eventTitle, this.dataset.rating, this.dataset.comments)" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.72rem;margin-top:6px;text-decoration:underline;padding:0;"><i class="fas fa-pen" style="font-size:.65rem;"></i> Edit my feedback</button>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="empty-state"><i class="fas fa-ticket-alt"></i><p>No registrations yet.<br><button style="background:none;border:none;color:var(--teal);cursor:pointer;font-size:.9rem;font-weight:600;margin-top:8px;" onclick="showSection('discover',document.querySelector('[data-section=discover]'))">Discover events →</button></p></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- UPCOMING EVENTS -->
+        <div class="section" id="section-upcoming">
+            <div class="page-header"><div class="page-header-left"><h1>Upcoming <em>Events</em></h1><p>Your registered events that haven't happened yet.</p></div></div>
+            {% set upcoming = my_registrations|selectattr('status','in',['Approved','Registration Closed'])|list %}
+            <div class="events-grid">
+                {% for event in upcoming %}
+                <div class="event-card">
+                    <div class="event-card-top">
+                        <span class="cat-tag">{{ event['category'] }}</span>
+                        <span class="days-badge" data-event-date="{{ event['event_date'] }}">Upcoming</span>
+                    </div>
+                    <h3>{{ event['title'] }}</h3>
+                    <span class="reg-id-badge">REG-{{ '%05d'|format(event['registration_id']) }}</span>
+                    <div class="event-meta">
+                        <div class="meta-row"><i class="fas fa-user"></i> {{ event['organizer_name'] }}</div>
+                        <div class="meta-row"><i class="fas fa-calendar"></i> {{ event['event_date'] }}{% if event['event_time'] %} · {{ event['event_time'] }}{% endif %}</div>
+                        <div class="meta-row"><i class="fas fa-location-dot"></i> {{ event['venue'] }}</div>
+                        {% if event['event_code'] %}<div class="meta-row"><i class="fas fa-barcode"></i> {{ event['event_code'] }}</div>{% endif %}
+                    </div>
+                    <div class="one-col-action">
+                        <a href="/participant/receipt/{{ event['registration_id'] }}" class="btn-icon-link"><i class="fas fa-file-pdf"></i> Download Receipt</a>
+                    </div>
+                    <div class="one-col-action">
+                        <button type="button" class="btn-icon-link" data-reg-id="{{ event['registration_id'] }}" data-event-title="{{ event['title'] }}" onclick="openQrModal(this.dataset.regId, this.dataset.eventTitle)"><i class="fas fa-qrcode"></i> Show Check-in QR</button>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state"><i class="fas fa-calendar-check"></i><p>No upcoming events. Register for an event to see it here.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- COMPLETED EVENTS -->
+        <div class="section" id="section-completed">
+            <div class="page-header"><div class="page-header-left"><h1>Completed <em>Events</em></h1><p>Events you attended that have finished.</p></div></div>
+            {% set completed = my_registrations|selectattr('status','equalto','Completed')|list %}
+            <div class="events-grid">
+                {% for event in completed %}
+                <div class="event-card">
+                    <div class="event-card-top">
+                        <span class="cat-tag">{{ event['category'] }}</span>
+                        <span class="pill pill-completed">Completed</span>
+                    </div>
+                    <h3>{{ event['title'] }}</h3>
+                    <span class="reg-id-badge">REG-{{ '%05d'|format(event['registration_id']) }}</span>
+                    <div class="event-meta">
+                        <div class="meta-row"><i class="fas fa-user"></i> {{ event['organizer_name'] }}</div>
+                        <div class="meta-row"><i class="fas fa-calendar"></i> {{ event['event_date'] }}{% if event['event_time'] %} · {{ event['event_time'] }}{% endif %}</div>
+                        <div class="meta-row"><i class="fas fa-location-dot"></i> {{ event['venue'] }}</div>
+                        {% if event['event_code'] %}<div class="meta-row"><i class="fas fa-barcode"></i> {{ event['event_code'] }}</div>{% endif %}
+                    </div>
+                    {% if not event['attended'] %}
+                    <div class="two-col-action">
+                        <a href="/participant/receipt/{{ event['registration_id'] }}" class="btn-icon-link" style="grid-column:1 / -1;"><i class="fas fa-file-pdf"></i> Receipt</a>
+                    </div>
+                    <div class="cert-lock-note"><i class="fas fa-lock"></i> Attendance not marked yet — certificate unlocks once the organizer confirms you attended.</div>
+                    {% elif not event['feedback_submitted'] %}
+                    <div class="two-col-action">
+                        <a href="/participant/receipt/{{ event['registration_id'] }}" class="btn-icon-link"><i class="fas fa-file-pdf"></i> Receipt</a>
+                        <button type="button" class="btn-icon-link" data-reg-id="{{ event['registration_id'] }}" data-event-title="{{ event['title'] }}" onclick="openFeedback(this.dataset.regId, this.dataset.eventTitle, 0, '')"><i class="fas fa-star"></i> Rate &amp; Unlock</button>
+                    </div>
+                    {% else %}
+                    <div class="two-col-action">
+                        <a href="/participant/receipt/{{ event['registration_id'] }}" class="btn-icon-link"><i class="fas fa-file-pdf"></i> Receipt</a>
+                        <a href="/participant/certificate/{{ event['registration_id'] }}" class="btn-icon-link"><i class="fas fa-award"></i> Certificate</a>
+                    </div>
+                    <button type="button" data-reg-id="{{ event['registration_id'] }}" data-event-title="{{ event['title'] }}" data-rating="{{ event['feedback_rating'] }}" data-comments="{{ event['feedback_comments'] or '' }}" onclick="openFeedback(this.dataset.regId, this.dataset.eventTitle, this.dataset.rating, this.dataset.comments)" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.72rem;margin-top:6px;text-decoration:underline;padding:0;"><i class="fas fa-pen" style="font-size:.65rem;"></i> Edit my feedback</button>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="empty-state"><i class="fas fa-flag-checkered"></i><p>No completed events yet.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div><!-- /page-content -->
+</div><!-- /main-wrap -->
+
+<script>
+function getCsrfToken() { return document.querySelector('meta[name="csrf-token"]').content; }
+
+const sidebar  = document.getElementById('sidebar');
+const mainWrap = document.getElementById('mainWrap');
+let collapsed  = false;
+
+function toggleSidebar() {
+    if (window.innerWidth <= 768) {
+        sidebar.classList.toggle('mobile-open');
+        document.getElementById('mobileOverlay').classList.toggle('active');
+    } else {
+        collapsed = !collapsed;
+        sidebar.classList.toggle('collapsed', collapsed);
+        mainWrap.classList.toggle('collapsed', collapsed);
+    }
+}
+function closeMobile() {
+    sidebar.classList.remove('mobile-open');
+    document.getElementById('mobileOverlay').classList.remove('active');
+}
+
+const LABELS = {dashboard:'Dashboard',discover:'Discover Events',registrations:'My Registrations',upcoming:'Upcoming Events',completed:'Completed Events'};
+function showSection(name, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    if (btn) btn.classList.add('active');
+    document.getElementById('breadcrumbLabel').textContent = LABELS[name] || name;
+    closeMobile();
+}
+
+function toggleDropdown() { document.getElementById('profileDropdown').classList.toggle('open'); }
+document.addEventListener('click', e => {
+    if (!e.target.closest('.dropdown')) document.getElementById('profileDropdown').classList.remove('open');
+});
+
+// NOTIFICATIONS
+const NOTIF_ICONS = {success:'fa-check-circle',info:'fa-bell',error:'fa-circle-xmark',warning:'fa-triangle-exclamation'};
+async function loadNotifications() {
+    try {
+        const res  = await fetch('/notifications');
+        const data = await res.json();
+        const badge = document.getElementById('notifBadge');
+        const list  = document.getElementById('notifList');
+        if (data.unread_count > 0) { badge.textContent = data.unread_count; badge.classList.add('show'); }
+        else badge.classList.remove('show');
+        if (!data.notifications || !data.notifications.length) { list.innerHTML = '<div class="notif-empty">No notifications yet.</div>'; return; }
+        list.innerHTML = data.notifications.map(n => `
+            <div class="notif-item ${n.is_read?'':'unread'}" onclick="markRead(${n.id},this)">
+                <div class="notif-icon ${n.type}"><i class="fas ${NOTIF_ICONS[n.type]||'fa-bell'}"></i></div>
+                <div class="notif-content">
+                    <div class="notif-title">${n.title}</div>
+                    <div class="notif-msg">${n.message}</div>
+                    <div class="notif-time">${new Date(n.created_at).toLocaleString()}</div>
+                </div>
+                ${!n.is_read?'<div class="notif-unread-dot"></div>':''}
+            </div>`).join('');
+    } catch(e) { document.getElementById('notifList').innerHTML = '<div class="notif-empty">Failed to load.</div>'; }
+}
+function toggleNotif() {
+    const dd = document.getElementById('notifDropdown');
+    dd.classList.toggle('open');
+    if (dd.classList.contains('open')) loadNotifications();
+}
+async function markRead(id, el) {
+    await fetch(`/notifications/mark_read/${id}`, {method:'POST', headers:{'X-CSRFToken': getCsrfToken()}});
+    el.classList.remove('unread');
+    const dot = el.querySelector('.notif-unread-dot');
+    if (dot) dot.remove();
+    loadNotifications();
+}
+async function markAllRead() {
+    await fetch('/notifications/mark_all_read', {method:'POST', headers:{'X-CSRFToken': getCsrfToken()}});
+    loadNotifications();
+}
+document.addEventListener('click', e => {
+    if (!e.target.closest('#notifBtn') && !e.target.closest('#notifDropdown'))
+        document.getElementById('notifDropdown').classList.remove('open');
+});
+
+async function logout() {
+    try { const r = await fetch('/logout'); const d = await r.json(); window.location.href = d.redirect||'/'; }
+    catch(e) { window.location.href = '/'; }
+}
+
+// DISCOVER FILTER
+const discoverSearch = document.getElementById('discoverSearch');
+const filterPills    = document.querySelectorAll('#categoryFilters .filter-pill');
+const dateFilterPills = document.querySelectorAll('#dateFilters .filter-pill');
+const discoverSort   = document.getElementById('discoverSort');
+const discoverGrid   = document.getElementById('discoverGrid');
+const discoverCards  = document.querySelectorAll('.discover-card');
+const noResults      = document.getElementById('noSearchResults');
+let activeCategory   = 'all';
+let activeDateRange  = 'all';
+
+function cardMatchesDateRange(card, range) {
+    if (range === 'all') return true;
+    const cardDate = new Date(card.dataset.date + 'T00:00:00');
+    if (isNaN(cardDate)) return true;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const diffDays = Math.round((cardDate - today) / 86400000);
+    if (range === 'today') return diffDays === 0;
+    if (range === 'week')  return diffDays >= 0 && diffDays <= 7;
+    if (range === 'month') return diffDays >= 0 && diffDays <= 31;
+    return true;
+}
+
+function applyFilters() {
+    const q = discoverSearch.value.trim().toLowerCase();
+    let visible = 0;
+    discoverCards.forEach(card => {
+        const matchCat    = activeCategory === 'all' || card.dataset.category === activeCategory;
+        const matchSearch = !q || card.dataset.search.includes(q);
+        const matchDate   = cardMatchesDateRange(card, activeDateRange);
+        const show = matchCat && matchSearch && matchDate;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    if (noResults) noResults.style.display = (visible === 0 && discoverCards.length > 0) ? 'block' : 'none';
+}
+
+function applySort() {
+    if (!discoverSort || !discoverGrid) return;
+    const mode  = discoverSort.value;
+    const cards = Array.from(discoverGrid.querySelectorAll('.discover-card'));
+    cards.sort((a, b) => {
+        if (mode === 'date_asc')   return a.dataset.date.localeCompare(b.dataset.date);
+        if (mode === 'date_desc')  return b.dataset.date.localeCompare(a.dataset.date);
+        if (mode === 'seats_desc') return Number(b.dataset.seatsLeft) - Number(a.dataset.seatsLeft);
+        if (mode === 'seats_asc')  return Number(a.dataset.seatsLeft) - Number(b.dataset.seatsLeft);
+        return 0;
+    });
+    cards.forEach(card => discoverGrid.appendChild(card));
+}
+
+if (discoverSearch) discoverSearch.addEventListener('input', applyFilters);
+filterPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+        filterPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        activeCategory = pill.dataset.cat;
+        applyFilters();
+    });
+});
+dateFilterPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+        dateFilterPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        activeDateRange = pill.dataset.range;
+        applyFilters();
+    });
+});
+if (discoverSort) discoverSort.addEventListener('change', applySort);
+applySort();
+
+// CANCEL BUTTON: hide if past deadline
+const today = new Date();
+today.setHours(0,0,0,0);
+document.querySelectorAll('.cancel-form').forEach(form => {
+    const closeDate = form.dataset.regClose;
+    if (closeDate) {
+        const dl = new Date(closeDate);
+        if (today > dl) {
+            form.style.display = 'none';
+            const note = document.createElement('span');
+            note.className = 'pill pill-closed';
+            note.style.cssText = 'display:flex;justify-content:center;padding:10px;width:100%;';
+            note.textContent = 'Cancellation Closed';
+            form.parentElement.appendChild(note);
+        }
+    }
+});
+
+// DAYS REMAINING
+document.querySelectorAll('.days-badge').forEach(el => {
+    const d = new Date(el.dataset.eventDate);
+    const diff = Math.ceil((d - today) / 86400000);
+    el.textContent = diff === 0 ? 'Today!' : diff === 1 ? '1 day left' : diff > 0 ? diff + ' days left' : 'Upcoming';
+});
+
+// FEEDBACK MODAL (rating unlocks certificate)
+function openFeedback(registrationId, eventTitle, existingRating, existingComments) {
+    const ratingNum = Number(existingRating) || 0;
+    document.getElementById('feedbackEventTitle').textContent = eventTitle;
+    document.getElementById('feedbackForm').action = `/participant/feedback/${registrationId}`;
+    setRating(ratingNum);
+    document.getElementById('feedbackForm').querySelector('textarea[name="comments"]').value = existingComments || '';
+    document.getElementById('feedbackSubmitBtn').innerHTML = ratingNum
+        ? '<i class="fas fa-check"></i> Update Feedback'
+        : '<i class="fas fa-award"></i> Submit &amp; Unlock Certificate';
+    document.getElementById('feedbackModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeFeedbackModal() {
+    document.getElementById('feedbackModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function setRating(value) {
+    document.getElementById('ratingInput').value = value;
+    document.querySelectorAll('#starRating i').forEach(star => {
+        star.classList.toggle('active', parseInt(star.dataset.value) <= value);
+    });
+    document.getElementById('feedbackSubmitBtn').disabled = value < 1;
+}
+document.getElementById('feedbackModal').addEventListener('click', e => { if (e.target === document.getElementById('feedbackModal')) closeFeedbackModal(); });
+
+// QR CHECK-IN MODAL
+function openQrModal(registrationId, eventTitle) {
+    document.getElementById('qrEventTitle').textContent = eventTitle;
+    document.getElementById('qrImage').src = `/participant/qr/${registrationId}?t=${Date.now()}`;
+    document.getElementById('qrModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeQrModal() {
+    document.getElementById('qrModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+document.getElementById('qrModal').addEventListener('click', e => { if (e.target === document.getElementById('qrModal')) closeQrModal(); });
+</script>
+
+<script>
+  document.body.dataset.role = "{{ session.get('role', 'Guest') }}";
+  document.body.dataset.username = "{{ session.get('user_name', '') }}";
+</script>
+<script src="/static/chatbot/chatbot.js"></script>
+</body>
+</html>
