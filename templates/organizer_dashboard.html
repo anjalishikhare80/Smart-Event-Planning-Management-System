@@ -172,6 +172,12 @@
 
         /* SECTION CARD */
         .section-card{background:var(--bg-elevated);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;}
+        .af-chevron{transition:transform .2s;color:var(--text-muted);}
+        .af-chevron.open{transform:rotate(180deg);}
+        .af-table{width:100%;border-collapse:collapse;margin-top:8px;}
+        .af-table th{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;}
+        .af-table td{padding:8px 10px;border-bottom:1px solid var(--line);font-size:.8rem;color:var(--text-muted);}
+        .af-table td.name{color:var(--text);font-weight:600;}
         .table-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
         .search-box{position:relative;flex:1;min-width:200px;}
         .search-box i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:.85rem;}
@@ -318,6 +324,12 @@
         <div class="nav-label">Reports</div>
         <button class="nav-item" data-section="registrations" data-tip="Registrations" onclick="showSection('registrations',this)">
             <i class="fas fa-users"></i><span class="label">Registrations</span>
+        </button>
+        <button class="nav-item" data-section="attendance" data-tip="Attendance" onclick="showSection('attendance',this)">
+            <i class="fas fa-user-check"></i><span class="label">Attendance</span>
+        </button>
+        <button class="nav-item" data-section="feedback" data-tip="Feedback" onclick="showSection('feedback',this)">
+            <i class="fas fa-star"></i><span class="label">Feedback</span>
         </button>
     </nav>
     <div class="sidebar-footer">
@@ -715,6 +727,53 @@
             </div>
         </div>
 
+        <!-- ATTENDANCE -->
+        <div class="section" id="section-attendance">
+            <div class="page-header"><div class="page-header-left"><h1><em>Attendance</em></h1><p>Mark participant attendance for each of your events.</p></div></div>
+            {% set active_events = events|rejectattr('status','in',['Pending','Rejected'])|list %}
+            <div style="display:flex;flex-direction:column;gap:14px;">
+                {% for event in active_events %}
+                <div class="section-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;cursor:pointer;" onclick="togglePanel({{ event['id'] }}, this, 'attendance')">
+                        <div>
+                            <span style="font-weight:600;color:var(--text);">{{ event['title'] }}</span>
+                            <span class="pill pill-{{ 'completed' if event['status']=='Completed' else 'approved' }}" style="margin-left:10px;font-size:.6rem;">{{ event['status'] }}</span>
+                        </div>
+                        <i class="fas fa-chevron-down af-chevron"></i>
+                    </div>
+                    <div class="af-panel" id="att-panel-{{ event['id'] }}" style="display:none;padding:0 20px 18px;">
+                        <div class="empty-state"><i class="fas fa-spinner fa-spin" style="opacity:1;color:var(--gold);"></i><p>Loading...</p></div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state"><i class="fas fa-user-check"></i><p>No approved or completed events yet.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- FEEDBACK -->
+        <div class="section" id="section-feedback">
+            <div class="page-header"><div class="page-header-left"><h1><em>Feedback</em></h1><p>Review ratings and comments participants left for your events.</p></div></div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+                {% for event in active_events %}
+                <div class="section-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;cursor:pointer;" onclick="togglePanel({{ event['id'] }}, this, 'feedback')">
+                        <div>
+                            <span style="font-weight:600;color:var(--text);">{{ event['title'] }}</span>
+                            <span class="pill pill-{{ 'completed' if event['status']=='Completed' else 'approved' }}" style="margin-left:10px;font-size:.6rem;">{{ event['status'] }}</span>
+                        </div>
+                        <i class="fas fa-chevron-down af-chevron"></i>
+                    </div>
+                    <div class="af-panel" id="fb-panel-{{ event['id'] }}" style="display:none;padding:0 20px 18px;">
+                        <div class="empty-state"><i class="fas fa-spinner fa-spin" style="opacity:1;color:var(--gold);"></i><p>Loading...</p></div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state"><i class="fas fa-star"></i><p>No approved or completed events yet.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+
     </div><!-- /page-content -->
 </div><!-- /main-wrap -->
 
@@ -740,7 +799,7 @@ function closeMobile() {
     document.getElementById('mobileOverlay').classList.remove('active');
 }
 
-const LABELS = {dashboard:'Dashboard',create:'Create Event',myevents:'My Events',pending:'Pending Approval',rejected:'Rejected Events',registrations:'Registrations'};
+const LABELS = {dashboard:'Dashboard',create:'Create Event',myevents:'My Events',pending:'Pending Approval',rejected:'Rejected Events',registrations:'Registrations',attendance:'Attendance',feedback:'Feedback'};
 function showSection(name, btn) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -845,6 +904,93 @@ async function openModal(eventId, eventTitle) {
         html += `<div style="padding:10px 0;font-family:var(--font-mono);font-size:.7rem;color:var(--text-muted);">${data.participants.length} participant(s) &middot; check a box to mark attendance manually, or scan a participant's check-in QR with your phone camera at entry (unlocks their certificate once they submit feedback)</div>`;
         document.getElementById('modalBody').innerHTML = html;
     } catch(e) { document.getElementById('modalBody').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle" style="color:var(--coral);opacity:1;"></i><p>Failed to load participants.</p></div>'; }
+}
+
+function starsHtmlSmall(rating) {
+    if (!rating) return '<span style="color:var(--text-muted);font-size:.72rem;">No feedback yet</span>';
+    let s = '';
+    for (let i = 1; i <= 5; i++) s += `<i class="fas fa-star" style="color:${i <= rating ? 'var(--gold)' : 'var(--line-strong)'};font-size:.72rem;"></i>`;
+    return s;
+}
+
+const openPanels = new Set();
+
+async function togglePanel(eventId, headerEl, type) {
+    const panelId = type === 'attendance' ? `att-panel-${eventId}` : `fb-panel-${eventId}`;
+    const key = `${type}-${eventId}`;
+    const panel = document.getElementById(panelId);
+    const chevron = headerEl.querySelector('.af-chevron');
+    const isOpen = openPanels.has(key);
+
+    if (isOpen) {
+        panel.style.display = 'none';
+        chevron.classList.remove('open');
+        openPanels.delete(key);
+        return;
+    }
+
+    panel.style.display = 'block';
+    chevron.classList.add('open');
+    openPanels.add(key);
+
+    if (type === 'attendance') {
+        await loadAttendancePanel(eventId, panel);
+    } else {
+        await loadFeedbackPanel(eventId, panel);
+    }
+}
+
+async function loadAttendancePanel(eventId, panel) {
+    try {
+        const res  = await fetch(`/organizer/event_participants/${eventId}`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        if (!data.participants.length) {
+            panel.innerHTML = '<div class="empty-state"><i class="fas fa-user-slash"></i><p>No registrations for this event.</p></div>';
+            return;
+        }
+        let html = '<div style="overflow-x:auto;"><table class="af-table"><thead><tr><th>Name</th><th>Email</th><th>Attended</th></tr></thead><tbody>';
+        data.participants.forEach(p => {
+            html += `<tr>
+                <td class="name">${escapeHtml(p.fullname)}</td>
+                <td>${escapeHtml(p.email)}</td>
+                <td><input type="checkbox" ${p.attended ? 'checked' : ''} style="width:15px;height:15px;cursor:pointer;accent-color:var(--gold);" onchange="toggleAttendance(${p.registration_id}, this)"></td>
+            </tr>`;
+        });
+        html += '</tbody></table></div>';
+        panel.innerHTML = html;
+    } catch (e) {
+        panel.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle" style="color:var(--coral);opacity:1;"></i><p>Failed to load.</p></div>';
+    }
+}
+
+async function loadFeedbackPanel(eventId, panel) {
+    try {
+        const res  = await fetch(`/organizer/event_feedback/${eventId}`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        if (!data.count) {
+            panel.innerHTML = '<div class="empty-state"><i class="fas fa-star-half-alt"></i><p>No feedback submitted yet.</p></div>';
+            return;
+        }
+        let html = `<div style="display:flex;align-items:center;gap:10px;margin:10px 0 14px;">
+            <span style="font-family:var(--font-display);font-size:1.3rem;color:var(--gold);font-weight:700;">${data.avg_rating}</span>
+            <div>${starsHtmlSmall(Math.round(data.avg_rating))}<div style="font-size:.68rem;color:var(--text-muted);margin-top:2px;">${data.count} response(s)</div></div>
+        </div><div style="display:flex;flex-direction:column;gap:10px;">`;
+        data.feedback.forEach(f => {
+            html += `<div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg-soft);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <span style="font-weight:600;color:var(--text);font-size:.8rem;">${escapeHtml(f.fullname)}</span>
+                    <span>${starsHtmlSmall(f.rating)}</span>
+                </div>
+                ${f.comments ? `<p style="color:var(--text-muted);font-size:.76rem;margin:0;">${escapeHtml(f.comments)}</p>` : ''}
+            </div>`;
+        });
+        html += '</div>';
+        panel.innerHTML = html;
+    } catch (e) {
+        panel.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle" style="color:var(--coral);opacity:1;"></i><p>Failed to load.</p></div>';
+    }
 }
 
 async function toggleAttendance(registrationId, checkbox) {

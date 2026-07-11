@@ -88,6 +88,11 @@
         .feedback-textarea{width:100%;min-height:90px;border-radius:10px;border:1px solid var(--line-strong);background:var(--bg-soft);color:var(--text);padding:10px 12px;font-family:var(--font-body);font-size:.85rem;resize:vertical;}
         .cert-lock-note{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--text-muted);background:var(--bg-soft);border:1px dashed var(--line-strong);border-radius:10px;padding:8px 10px;margin-top:6px;}
         .cert-lock-note i{color:var(--gold);}
+        .cert-checklist{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+        .cert-step{display:flex;align-items:center;gap:9px;font-size:.78rem;color:var(--text-muted);}
+        .cert-step i{font-size:.85rem;color:var(--line-strong);}
+        .cert-step.done{color:var(--text);}
+        .cert-step.done i{color:var(--teal);}
         @keyframes fadeDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
         .notif-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);}
         .notif-header span{font-weight:700;color:var(--text);font-size:.9rem;}
@@ -247,7 +252,7 @@
             <button class="modal-close" onclick="closeFeedbackModal()"><i class="fas fa-times"></i></button>
         </div>
         <form id="feedbackForm" method="POST" action="/participant/feedback/0">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="modal-body">
                 <p style="color:var(--text-muted);font-size:.82rem;margin-bottom:4px;">Your feedback unlocks the certificate for this event.</p>
                 <div class="star-rating" id="starRating">
@@ -305,6 +310,9 @@
         </button>
         <button class="nav-item" data-section="completed" data-tip="Completed" onclick="showSection('completed',this)">
             <i class="fas fa-flag-checkered"></i><span class="label">Completed Events</span>
+        </button>
+        <button class="nav-item" data-section="certificates" data-tip="Certificates" onclick="showSection('certificates',this)">
+            <i class="fas fa-award"></i><span class="label">Certificates</span>
         </button>
     </nav>
     <div class="sidebar-footer">
@@ -620,6 +628,54 @@
             </div>
         </div>
 
+        <!-- CERTIFICATES -->
+        <div class="section" id="section-certificates">
+            <div class="page-header"><div class="page-header-left"><h1>My <em>Certificates</em></h1><p>Track and download your certificates of participation.</p></div></div>
+            {% set completed = my_registrations|selectattr('status','equalto','Completed')|list %}
+            <div class="events-grid">
+                {% for event in completed %}
+                <div class="event-card">
+                    <div class="event-card-top">
+                        <span class="cat-tag">{{ event['category'] }}</span>
+                    </div>
+                    <h3>{{ event['title'] }}</h3>
+                    <div class="event-meta" style="margin-bottom:14px;">
+                        <div class="meta-row"><i class="fas fa-calendar"></i> {{ event['event_date'] }}</div>
+                    </div>
+
+                    <div class="cert-checklist">
+                        <div class="cert-step {{ 'done' if event['attended'] else 'pending' }}">
+                            <i class="fas {{ 'fa-circle-check' if event['attended'] else 'fa-circle' }}"></i>
+                            <span>Attendance {{ 'confirmed' if event['attended'] else 'pending (organizer marks this)' }}</span>
+                        </div>
+                        <div class="cert-step {{ 'done' if event['feedback_submitted'] else 'pending' }}">
+                            <i class="fas {{ 'fa-circle-check' if event['feedback_submitted'] else 'fa-circle' }}"></i>
+                            <span>Feedback {{ 'submitted' if event['feedback_submitted'] else 'not submitted yet' }}</span>
+                        </div>
+                        <div class="cert-step {{ 'done' if (event['attended'] and event['feedback_submitted']) else 'pending' }}">
+                            <i class="fas {{ 'fa-circle-check' if (event['attended'] and event['feedback_submitted']) else 'fa-circle' }}"></i>
+                            <span>Certificate {{ 'ready' if (event['attended'] and event['feedback_submitted']) else 'locked' }}</span>
+                        </div>
+                    </div>
+
+                    {% if not event['attended'] %}
+                    <div class="one-col-action"><button type="button" class="btn-icon-link" disabled style="opacity:.5;cursor:not-allowed;"><i class="fas fa-lock"></i> Waiting on organizer</button></div>
+                    {% elif not event['feedback_submitted'] %}
+                    <div class="one-col-action">
+                        <button type="button" class="btn-icon-link" data-reg-id="{{ event['registration_id'] }}" data-event-title="{{ event['title'] }}" onclick="openFeedback(this.dataset.regId, this.dataset.eventTitle, 0, '')"><i class="fas fa-star"></i> Rate to Unlock</button>
+                    </div>
+                    {% else %}
+                    <div class="one-col-action">
+                        <a href="/participant/certificate/{{ event['registration_id'] }}" class="btn-icon-link"><i class="fas fa-award"></i> Download Certificate</a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="empty-state"><i class="fas fa-award"></i><p>No certificates yet — they appear here once an event you registered for is completed.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+
     </div><!-- /page-content -->
 </div><!-- /main-wrap -->
 
@@ -645,7 +701,7 @@ function closeMobile() {
     document.getElementById('mobileOverlay').classList.remove('active');
 }
 
-const LABELS = {dashboard:'Dashboard',discover:'Discover Events',registrations:'My Registrations',upcoming:'Upcoming Events',completed:'Completed Events'};
+const LABELS = {dashboard:'Dashboard',discover:'Discover Events',registrations:'My Registrations',upcoming:'Upcoming Events',completed:'Completed Events',certificates:'Certificates'};
 function showSection(name, btn) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));

@@ -44,6 +44,7 @@ from database import (
     update_pending_event, resubmit_event, delete_owned_event,
     close_registration, get_event_participants, get_organizer_stats,
     mark_attendance, submit_feedback, get_feedback_by_registration, get_event_feedback,
+    get_event_attendance_feedback,
     get_visible_events_for_participants, get_all_events, admin_delete_event,
     get_pending_events_all, approve_event, reject_event,
     bulk_approve_events, bulk_reject_events,
@@ -1181,6 +1182,36 @@ def organizer_event_feedback(event_id):
     }), 200
 
 
+@app.route('/organizer/event_attendance_feedback/<int:event_id>')
+def organizer_event_attendance_feedback(event_id):
+    """Combined attendance + feedback view for one event, used by the
+    'Attendance & Feedback' dashboard tab (avoids two separate modal fetches)."""
+    if not is_user_logged_in() or session.get('role') != 'Organizer':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    event = get_event_by_id(event_id)
+    if not event or event['organizer_id'] != session['user_id']:
+        return jsonify({'success': False, 'message': 'Event not found'}), 404
+
+    rows = get_event_attendance_feedback(event_id, session['user_id'])
+
+    return jsonify({
+        'success':     True,
+        'event_title': event['title'],
+        'participants': [
+            {
+                'registration_id': r['registration_id'],
+                'fullname':        r['fullname'],
+                'email':           r['email'],
+                'attended':        bool(r['attended']),
+                'rating':          r['feedback_rating'],
+                'comments':        r['feedback_comments'] or '',
+            }
+            for r in rows
+        ]
+    }), 200
+
+
 @app.route('/organizer/mark_attendance/<int:registration_id>', methods=['POST'])
 def mark_attendance_route(registration_id):
     if not is_user_logged_in() or session.get('role') != 'Organizer':
@@ -1707,14 +1738,23 @@ def bad_request(e):
     # Covers CSRF validation failures among other 400s. Forms posted from
     # this app always include the token, so this mainly protects against
     # forged/expired requests from elsewhere.
-    if request.path.startswith(('/login', '/register', '/contact')) or request.is_json:
+    if request.is_json or request.path.startswith(('/login', '/register', '/contact')):
         return jsonify({'success': False,
                         'message': 'Your session expired or the request was invalid. Please refresh the page and try again.'}), 400
-    return render_template('500.html'), 400
+    return ("<div style='font-family:sans-serif;text-align:center;padding:60px 20px;'>"
+            "<h2 style='color:#ef6361;'>Your session expired</h2>"
+            "<p style='color:#666;'>Please refresh the page and try again.</p>"
+            "<a href='javascript:history.back()' style='color:#f2b134;'>&larr; Go back</a>"
+            "</div>"), 400
 
 
 # ============= RUN ============= #
 
+# Runs at import time (not just when this file is executed directly), so
+# table creation/migrations happen whether the app is started with
+# `python app.py` (local dev) OR `gunicorn app:app` (Render/production) —
+# gunicorn imports this module rather than running it as __main__, so a
+# guard here would silently skip database setup in production.
 print("🗄️  Initialising database...")
 init_db()
 print("🚀 EVENTHUB READY")

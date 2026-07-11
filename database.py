@@ -1093,5 +1093,29 @@ def get_event_feedback(event_id, organizer_id):
     return rows
 
 
+def get_event_attendance_feedback(event_id, organizer_id):
+    """
+    Combined per-registration view (attendance + feedback in one row) for
+    the organizer's 'Attendance & Feedback' dashboard tab — avoids having
+    to merge two separate queries client-side.
+    """
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT r.id AS registration_id, r.attended, r.registered_at,
+               u.fullname, u.email, u.mobile,
+               f.rating AS feedback_rating, f.comments AS feedback_comments
+        FROM registrations r
+        JOIN users u  ON r.user_id  = u.id
+        JOIN events e ON r.event_id = e.id
+        LEFT JOIN feedback f ON f.registration_id = r.id
+        WHERE r.event_id = %s AND e.organizer_id = %s
+        ORDER BY r.registered_at ASC
+    """, (event_id, organizer_id))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+
 if __name__ == "__main__":
     init_db()
